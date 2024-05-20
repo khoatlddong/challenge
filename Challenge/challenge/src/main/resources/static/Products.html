@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<h1>Product List</h1>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Brand</th>
+        <th>Type</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody id="product-table-body">
+    <!-- Data will be populated here by JavaScript -->
+    </tbody>
+</table>
+<div>
+    <button id="first-page" onclick="goToFirstPage()">First</button>
+    <button id="prev-page" onclick="changePage(-1)">Previous</button>
+    <span id="page-info"></span>
+    <button id="next-page" onclick="changePage(1)">Next</button>
+    <button id="last-page" onclick="goToLastPage()">Last</button>
+</div>
+
+<script>
+    let currentPage = 0;
+    let totalPages = 0;
+    const pageSize = 9;
+
+    async function fetchProducts(page) {
+        const response = await fetch(`/api/products/all?page=${page}&size=${pageSize}`);
+        const data = await response.json();
+        return data;
+    }
+
+    async function loadProducts() {
+        const data = await fetchProducts(currentPage);
+        const products = data.content;
+        const tableBody = document.getElementById('product-table-body');
+        tableBody.innerHTML = '';
+
+        products.forEach(product => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.code}</td>
+                    <td>${product.name}</td>
+                    <td>${product.category}</td>
+                    <td>${product.brand}</td>
+                    <td>${product.type}</td>
+                    <td>${product.description}</td>
+                `;
+            tableBody.appendChild(row);
+        });
+
+        totalPages = data.totalPages;
+        document.getElementById('page-info').innerText = `Page ${currentPage + 1} of ${totalPages}`;
+        document.getElementById('prev-page').disabled = data.first;
+        document.getElementById('next-page').disabled = data.last;
+        document.getElementById('first-page').disabled = data.first;
+        document.getElementById('last-page').disabled = data.last;
+    }
+
+    function changePage(delta) {
+        currentPage += delta;
+        loadProducts();
+    }
+
+    function goToFirstPage() {
+        currentPage = 0;
+        loadProducts();
+    }
+
+    function goToLastPage() {
+        currentPage = totalPages - 1;
+        loadProducts();
+    }
+
+    document.addEventListener('DOMContentLoaded', loadProducts);
+</script>
+</body>
+</html>
